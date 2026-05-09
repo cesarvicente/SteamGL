@@ -297,7 +297,7 @@ export async function fetchGameAndDLCs(
 			else skipped++;
 		}
 		done += batch.length;
-		onProgress?.(done, total, `${done}/${total}${skipped > 0 ? ` (${skipped} soundtracks ignoradas)` : ''}`);
+		onProgress?.(done, total, `${done}/${total}`);
 		if (i + BATCH < allIdsArr.length) await sleep(DELAY);
 	}
 
