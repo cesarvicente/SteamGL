@@ -297,8 +297,8 @@ export function openGreenLumarModal(doc: Document, appid: number, gameName?: str
 
 	fetchGameAndDLCs(appid, (cur, total, status) => {
 		const p = loading.querySelector('[data-progress]') as HTMLElement;
-		if (total === 0) p.textContent = status;
-		else p.textContent = `${cur} / ${total} • ${status}`;
+		if (total === 0) p.textContent = status || 'preparando...';
+		else p.textContent = `${cur} / ${total}`;
 	})
 		.then((items) => {
 			state.items = items;

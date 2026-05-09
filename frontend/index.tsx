@@ -108,14 +108,14 @@ function watchDocument(doc: Document): void {
 }
 
 export default definePlugin(async (): Promise<Plugin> => {
-	console.log('[disable-play-button] plugin starting');
-	flog('[GreenLumar] PLUGIN INICIADO no contexto', (window as any).location?.href || 'unknown');
+	console.log('[gl-easytool] plugin starting');
+	flog('[GL EasyTool] PLUGIN INICIADO no contexto', (window as any).location?.href || 'unknown');
 
 	// Registra ANTES de qualquer await: o Object.assign do loader já criou
-	// PLUGIN_LIST['disable-play-button'] antes de chamar e.default(), então
+	// PLUGIN_LIST['gl-easytool'] antes de chamar e.default(), então
 	// podemos setar aqui e call_frontend_method() vai encontrar no contexto correto.
-	(window as any).PLUGIN_LIST['disable-play-button'].onDLLInjectorDetected = () => {
-		console.log('[disable-play-button] onDLLInjectorDetected called, enabling blocking');
+	(window as any).PLUGIN_LIST['gl-easytool'].onDLLInjectorDetected = () => {
+		console.log('[gl-easytool] onDLLInjectorDetected called, enabling blocking');
 		setBlocking(true);
 	};
 
@@ -140,5 +140,30 @@ export default definePlugin(async (): Promise<Plugin> => {
 		}
 	});
 
-	return { icon: <span>🚫</span> } as unknown as Plugin;
+	const settingsContent = (
+		<div style={{ padding: '20px', color: '#c7d5e0', fontFamily: 'Motiva Sans, Arial, sans-serif' }}>
+			<h2 style={{ color: '#fff', margin: '0 0 16px' }}>GL EasyTool</h2>
+			<p style={{ margin: '0 0 12px', lineHeight: 1.5 }}>
+				Adiciona um botão <strong style={{ color: '#5ba32b' }}>GreenLumar</strong> à página de
+				cada jogo da biblioteca, ao lado dos ícones de configurações. Permite selecionar
+				DLCs do jogo e salvar seus AppIDs em <code>AppList/</code>.
+			</p>
+			<h3 style={{ color: '#fff', margin: '20px 0 8px', fontSize: '14px' }}>Pasta de saída</h3>
+			<div style={{ background: '#16202d', padding: '12px', borderRadius: 4, fontFamily: 'Consolas, monospace', fontSize: 13 }}>
+				<span style={{ color: '#67c1f5' }}>C:\Program Files (x86)\Steam\AppList</span>
+			</div>
+			<h3 style={{ color: '#fff', margin: '20px 0 8px', fontSize: '14px' }}>Como usar</h3>
+			<ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.6 }}>
+				<li>Clique em qualquer jogo da biblioteca</li>
+				<li>Clique no botão verde <strong>GreenLumar</strong> (ao lado do coração)</li>
+				<li>Selecione as DLCs desejadas e confirme</li>
+			</ol>
+		</div>
+	);
+
+	return {
+		title: 'GL EasyTool',
+		icon: <span style={{ fontSize: '14px' }}>🟢</span>,
+		content: settingsContent,
+	} as unknown as Plugin;
 });

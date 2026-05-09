@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 
 logger = PluginUtils.Logger()
-LOG_FILE = r"C:\Program Files (x86)\Steam\plugins\disable-play-button\debug.log"
+LOG_FILE = r"C:\Program Files (x86)\Steam\plugins\gl-easytool\debug.log"
 STEAM_DIR = r"C:\Program Files (x86)\Steam"
 APPLIST_DIR = os.path.join(STEAM_DIR, "AppList")
 DLLINJECTOR = os.path.join(STEAM_DIR, "DLLInjector.exe")
@@ -51,7 +51,7 @@ def next_file_index(folder):
     return max_idx + 1
 
 
-FRONTEND_LOG = r"C:\Program Files (x86)\Steam\plugins\disable-play-button\frontend.log"
+FRONTEND_LOG = r"C:\Program Files (x86)\Steam\plugins\gl-easytool\frontend.log"
 
 
 class Backend:

@@ -261,12 +261,11 @@ export async function fetchGameAndDLCs(
 		return result;
 	}
 
-	onProgress?.(0, total, `${total} DLCs encontradas, buscando nomes...`);
+	onProgress?.(0, total, '');
 
 	const BATCH = 5;
 	const DELAY = 350;
 	let done = 0;
-
 	let skipped = 0;
 
 	for (let i = 0; i < allIdsArr.length; i += BATCH) {
@@ -297,7 +296,8 @@ export async function fetchGameAndDLCs(
 			else skipped++;
 		}
 		done += batch.length;
-		onProgress?.(done, total, `${done}/${total}`);
+		// Subtrai soundtracks ignoradas pra contagem refletir os itens reais
+		onProgress?.(done - skipped, total - skipped, '');
 		if (i + BATCH < allIdsArr.length) await sleep(DELAY);
 	}
 

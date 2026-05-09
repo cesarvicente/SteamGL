@@ -1,7 +1,7 @@
 {
-	"name": "disable-play-button",
+	"name": "gl-easytool",
 	"version": "1.0.0",
-	"description": "Disables the Play button in Steam library",
+	"description": "GL EasyTool — GreenLumar action button for the Steam game library",
 	"type": "module",
 	"scripts": {
 		"dev": "millennium-ttc --build dev",

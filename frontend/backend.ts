@@ -1,6 +1,6 @@
 declare const Millennium: any;
 
-const PLUGIN_NAME = 'disable-play-button';
+const PLUGIN_NAME = 'gl-easytool';
 
 /**
  * Chama um método do backend Python.
