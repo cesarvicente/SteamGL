@@ -2,8 +2,34 @@ import { definePlugin, Plugin, sleep } from '@steambrew/client';
 import React from 'react';
 import { setupContextMenuHook } from './menu';
 import { flog } from './flog';
+import { callBackend } from './backend';
 
 declare const g_PopupManager: any;
+declare const MainWindowBrowserManager: any;
+
+const allowedAppIds = new Set<number>();
+
+async function loadAllowList(): Promise<void> {
+	try {
+		const r = await callBackend<string>('Backend.get_applist');
+		const ids = typeof r === 'string' ? JSON.parse(r) : r;
+		if (Array.isArray(ids)) {
+			ids.forEach((id) => allowedAppIds.add(id));
+			flog('[GL EasyTool] AppList carregada:', allowedAppIds.size, 'appids');
+		}
+	} catch (e: any) {
+		flog('[GL EasyTool] erro carregando AppList:', e?.message ?? String(e));
+	}
+}
+
+function getCurrentAppId(): number | null {
+	try {
+		const path = MainWindowBrowserManager?.m_lastLocation?.pathname || '';
+		const m = path.match(/\/library\/app\/(\d+)/);
+		if (m) return parseInt(m[1], 10);
+	} catch {}
+	return null;
+}
 
 const DISABLED_CLASS = 'millennium_disabled_play';
 const PLAY_TEXTS = ['jogar', 'play', 'jugar', 'jouer', 'spielen', 'играть'];
@@ -61,6 +87,10 @@ function injectStyle(doc: Document): void {
 }
 
 function disablePlayButtons(doc: Document): void {
+	// Se o jogo atual está na allowlist (AppID salvo via GreenLumar), não bloqueia
+	const currentAppId = getCurrentAppId();
+	if (currentAppId !== null && allowedAppIds.has(currentAppId)) return;
+
 	const selector = 'button, [role="button"], [role="menuitem"], [class*="gameactionbutton"]';
 	doc.querySelectorAll<Element>(selector).forEach((el) => {
 		if (isPlayElement(el) && !el.classList.contains(DISABLED_CLASS)) {
@@ -118,6 +148,9 @@ export default definePlugin(async (): Promise<Plugin> => {
 		console.log('[gl-easytool] onDLLInjectorDetected called, enabling blocking');
 		setBlocking(true);
 	};
+
+	// Carrega a allowlist em background (não bloqueia o startup do plugin)
+	loadAllowList();
 
 	while (typeof g_PopupManager === 'undefined') {
 		await sleep(100);

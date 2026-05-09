@@ -69,6 +69,28 @@ class Backend:
             return f"err: {e}"
 
     @staticmethod
+    def get_applist():
+        """Le todos os arquivos N.txt da pasta AppList e retorna lista de AppIDs."""
+        try:
+            if not os.path.isdir(APPLIST_DIR):
+                return json.dumps([])
+            appids = []
+            for name in os.listdir(APPLIST_DIR):
+                if not name.lower().endswith('.txt'):
+                    continue
+                try:
+                    with open(os.path.join(APPLIST_DIR, name), 'r', encoding='utf-8') as f:
+                        v = f.read().strip()
+                        if v.isdigit():
+                            appids.append(int(v))
+                except Exception:
+                    continue
+            return json.dumps(appids)
+        except Exception as e:
+            flog(f"get_applist error: {e}")
+            return json.dumps([])
+
+    @staticmethod
     def save_appids(appids_json):
         """Salva uma lista de AppIDs em arquivos N.txt na pasta AppList.
 
