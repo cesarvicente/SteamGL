@@ -302,7 +302,7 @@ export function openGreenLumarModal(doc: Document, appid: number, gameName?: str
 	})
 		.then((items) => {
 			state.items = items;
-			items.forEach((i) => state.selected.add(i.appid));
+			// nada pre-selecionado por padrao
 			body.removeChild(loading);
 			body.appendChild(buildListView(doc, items, state));
 			// Mostra contagem por fonte
