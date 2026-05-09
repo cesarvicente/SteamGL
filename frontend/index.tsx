@@ -21,6 +21,16 @@ const CSS = `
 }
 `;
 
+let blockingEnabled = false;
+const watchedDocs = new Set<Document>();
+
+function blockEvent(e: Event): void {
+	if (!blockingEnabled) return;
+	e.preventDefault();
+	e.stopPropagation();
+	e.stopImmediatePropagation();
+}
+
 function getVisibleText(el: Element): string {
 	return Array.from(el.childNodes)
 		.filter((n) => n.nodeType === Node.TEXT_NODE || (n.nodeType === Node.ELEMENT_NODE && (n as Element).tagName !== 'SVG'))
@@ -46,26 +56,44 @@ function injectStyle(doc: Document): void {
 }
 
 function disablePlayButtons(doc: Document): void {
-	doc.querySelectorAll<Element>('button, [role="button"], [class*="gameactionbutton"]').forEach((el) => {
+	const selector = 'button, [role="button"], [role="menuitem"], [class*="gameactionbutton"]';
+	doc.querySelectorAll<Element>(selector).forEach((el) => {
 		if (isPlayElement(el) && !el.classList.contains(DISABLED_CLASS)) {
 			el.classList.add(DISABLED_CLASS);
-			// Bloqueia cliques no capture phase, antes do React processar
-			el.addEventListener('click', (e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-			}, true);
+			el.addEventListener('click', blockEvent, true);
+			el.addEventListener('dblclick', blockEvent, true);
 		}
 	});
 }
 
+function applyToDoc(doc: Document, enabled: boolean): void {
+	if (enabled) {
+		injectStyle(doc);
+		disablePlayButtons(doc);
+	} else {
+		doc.querySelectorAll<Element>(`.${DISABLED_CLASS}`).forEach((el) => {
+			el.classList.remove(DISABLED_CLASS);
+		});
+	}
+}
+
+function setBlocking(enabled: boolean): void {
+	if (blockingEnabled === enabled) return;
+	blockingEnabled = enabled;
+	watchedDocs.forEach((doc) => applyToDoc(doc, enabled));
+}
+
 function watchDocument(doc: Document): void {
+	watchedDocs.add(doc);
 	injectStyle(doc);
-	disablePlayButtons(doc);
+	doc.addEventListener('dblclick', blockEvent, true);
+	if (blockingEnabled) disablePlayButtons(doc);
 	let timer: ReturnType<typeof setTimeout>;
 	const observer = new MutationObserver(() => {
 		clearTimeout(timer);
-		timer = setTimeout(() => disablePlayButtons(doc), 100);
+		timer = setTimeout(() => {
+			if (blockingEnabled) disablePlayButtons(doc);
+		}, 100);
 	});
 	const start = () => observer.observe(doc.body, { childList: true, subtree: true });
 	if (doc.body) start();
@@ -73,18 +101,36 @@ function watchDocument(doc: Document): void {
 }
 
 export default definePlugin(async (): Promise<Plugin> => {
+	console.log('[disable-play-button] plugin starting');
+
+	// Registra ANTES de qualquer await: o Object.assign do loader já criou
+	// PLUGIN_LIST['disable-play-button'] antes de chamar e.default(), então
+	// podemos setar aqui e call_frontend_method() vai encontrar no contexto correto.
+	(window as any).PLUGIN_LIST['disable-play-button'].onDLLInjectorDetected = () => {
+		console.log('[disable-play-button] onDLLInjectorDetected called, enabling blocking');
+		setBlocking(true);
+	};
+
 	while (typeof g_PopupManager === 'undefined') {
 		await sleep(100);
 	}
 
 	g_PopupManager.m_mapPopups?.data_?.forEach((entry: any) => {
 		const popup = entry.value_;
-		if (popup?.m_popup?.document) watchDocument(popup.m_popup.document);
+		const doc = popup?.m_popup?.document;
+		if (doc) {
+			console.log('[disable-play-button] existing popup:', popup?.m_strName || 'unknown');
+			watchDocument(doc);
+		}
 	});
 
 	g_PopupManager.AddPopupCreatedCallback((popup: any) => {
-		if (popup?.m_popup?.document) watchDocument(popup.m_popup.document);
+		const doc = popup?.m_popup?.document;
+		if (doc) {
+			console.log('[disable-play-button] new popup:', popup?.m_strName || 'unknown');
+			watchDocument(doc);
+		}
 	});
 
-	return { icon: <span>🚫</span> };
+	return { icon: <span>🚫</span> } as unknown as Plugin;
 });

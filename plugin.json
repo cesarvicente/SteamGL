@@ -4,5 +4,5 @@
 	"common_name": "Disable Play Button",
 	"description": "Disables the Play button in Steam library",
 	"version": "1.0.0",
-	"useBackend": false
+	"useBackend": true
 }
