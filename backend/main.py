@@ -2,6 +2,8 @@ import Millennium, PluginUtils  # type: ignore
 import subprocess
 import os
 import json
+import threading
+import time
 from datetime import datetime
 
 logger = PluginUtils.Logger()
@@ -139,19 +141,24 @@ class Backend:
             return json.dumps({"ok": False, "error": str(e)})
 
 
+def _delayed_dll_check():
+    """Roda em thread separada — bloquear o _front_end_loaded trava o Millennium."""
+    flog("_delayed_dll_check thread started, waiting 5s for main window...")
+    time.sleep(5)
+    running = is_dll_injector_running()
+    flog(f"DLLInjector detected: {running}")
+    if running:
+        try:
+            Millennium.call_frontend_method("onDLLInjectorDetected")
+            flog("onDLLInjectorDetected dispatched")
+        except Exception as e:
+            flog(f"call_frontend_method error: {e}")
+
+
 class Plugin:
     def _front_end_loaded(self):
-        import time
-        flog("_front_end_loaded called, waiting 5s for main window...")
-        time.sleep(5)
-        running = is_dll_injector_running()
-        flog(f"DLLInjector detected: {running}")
-        if running:
-            try:
-                Millennium.call_frontend_method("onDLLInjectorDetected")
-                flog("onDLLInjectorDetected dispatched")
-            except Exception as e:
-                flog(f"call_frontend_method error: {e}")
+        flog("_front_end_loaded called, scheduling DLL check in background thread")
+        threading.Thread(target=_delayed_dll_check, daemon=True).start()
 
     def _load(self):
         flog("_load called")
