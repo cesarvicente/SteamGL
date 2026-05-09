@@ -1,0 +1,17 @@
+{
+	"name": "disable-play-button",
+	"version": "1.0.0",
+	"description": "Disables the Play button in Steam library",
+	"type": "module",
+	"scripts": {
+		"dev": "millennium-ttc --build dev",
+		"build": "millennium-ttc --build prod"
+	},
+	"dependencies": {
+		"@steambrew/client": "latest",
+		"@steambrew/ttc": "latest"
+	},
+	"devDependencies": {
+		"@types/react": "^18.0.0"
+	}
+}
