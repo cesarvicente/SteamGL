@@ -1,5 +1,7 @@
 import { definePlugin, Plugin, sleep } from '@steambrew/client';
 import React from 'react';
+import { setupContextMenuHook } from './menu';
+import { flog } from './flog';
 
 declare const g_PopupManager: any;
 
@@ -41,9 +43,12 @@ function getVisibleText(el: Element): string {
 }
 
 function isPlayElement(el: Element): boolean {
+	// Não bloqueia o nosso próprio item GreenLumar
+	if (el.getAttribute('data-greenlumar-injected') === '1') return false;
 	const text = getVisibleText(el);
 	const full = (el.textContent ?? '').trim().toLowerCase();
 	const candidate = text.length > 0 ? text : full;
+	if (candidate.includes('greenlumar')) return false;
 	return candidate.length <= 30 && PLAY_TEXTS.some((pt) => candidate === pt || candidate.includes(pt));
 }
 
@@ -84,10 +89,12 @@ function setBlocking(enabled: boolean): void {
 }
 
 function watchDocument(doc: Document): void {
+	if (watchedDocs.has(doc)) return;
 	watchedDocs.add(doc);
 	injectStyle(doc);
 	doc.addEventListener('dblclick', blockEvent, true);
 	if (blockingEnabled) disablePlayButtons(doc);
+	setupContextMenuHook(doc);
 	let timer: ReturnType<typeof setTimeout>;
 	const observer = new MutationObserver(() => {
 		clearTimeout(timer);
@@ -102,6 +109,7 @@ function watchDocument(doc: Document): void {
 
 export default definePlugin(async (): Promise<Plugin> => {
 	console.log('[disable-play-button] plugin starting');
+	flog('[GreenLumar] PLUGIN INICIADO no contexto', (window as any).location?.href || 'unknown');
 
 	// Registra ANTES de qualquer await: o Object.assign do loader já criou
 	// PLUGIN_LIST['disable-play-button'] antes de chamar e.default(), então
@@ -119,7 +127,7 @@ export default definePlugin(async (): Promise<Plugin> => {
 		const popup = entry.value_;
 		const doc = popup?.m_popup?.document;
 		if (doc) {
-			console.log('[disable-play-button] existing popup:', popup?.m_strName || 'unknown');
+			flog('[GreenLumar] popup existente:', popup?.m_strName || 'unknown', 'url:', doc.URL);
 			watchDocument(doc);
 		}
 	});
@@ -127,7 +135,7 @@ export default definePlugin(async (): Promise<Plugin> => {
 	g_PopupManager.AddPopupCreatedCallback((popup: any) => {
 		const doc = popup?.m_popup?.document;
 		if (doc) {
-			console.log('[disable-play-button] new popup:', popup?.m_strName || 'unknown');
+			flog('[GreenLumar] novo popup:', popup?.m_strName || 'unknown', 'url:', doc.URL);
 			watchDocument(doc);
 		}
 	});

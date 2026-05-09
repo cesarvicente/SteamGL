@@ -1,3 +1,5 @@
 node_modules/
 .millennium/
 package-lock.json
+debug.log
+frontend.log
